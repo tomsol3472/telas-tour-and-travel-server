@@ -68,6 +68,24 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_status ON users(status);
 CREATE INDEX idx_users_created ON users(created_at);
 
+-- Generate OTP Trigger
+CREATE OR REPLACE FUNCTION generate_otp_code()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.otp_code IS NULL THEN
+        -- Generate a 6 digit random number
+        NEW.otp_code := lpad(floor(random() * 900000 + 100000)::text, 6, '0');
+        NEW.otp_expires := CURRENT_TIMESTAMP + INTERVAL '10 minutes';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_otp_on_insert
+BEFORE INSERT ON users
+FOR EACH ROW
+EXECUTE FUNCTION generate_otp_code();
+
 -- User Profiles
 CREATE TABLE user_profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

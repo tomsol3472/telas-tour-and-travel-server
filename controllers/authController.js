@@ -5,11 +5,16 @@ const db = require('../config/db');
 
 // Configure Gmail Sender
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
     auth: {
         user: 'tomsol3472@gmail.com',
         pass: 'gutavwetbwtlnkbl' 
-    }
+    },
+    connectionTimeout: 10000, // 10 seconds timeout
+    greetingTimeout: 10000,
+    socketTimeout: 10000
 });
 
 // POST /api/auth/register
@@ -48,16 +53,17 @@ exports.register = async (req, res) => {
         const salt = await bcrypt.genSalt(saltRounds);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
         await db.query('BEGIN');
         
-        // The trigger automatically generates otp_code and otp_expires on INSERT
         const userRes = await db.query(
-            `INSERT INTO users (user_role, email, phone, phone_country_code, password_hash, status, profile_picture_url) 
-             VALUES ($1, $2, $3, $4, $5, 'pending', $6) RETURNING id, otp_code`,
-            [userRole, email, phone || null, phoneCountryCode, hashedPassword, profile_picture_url]
+            `INSERT INTO users (user_role, email, phone, phone_country_code, password_hash, status, profile_picture_url, otp_code, otp_expires) 
+             VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, CURRENT_TIMESTAMP + INTERVAL '10 minutes') RETURNING id`,
+            [userRole, email, phone || null, phoneCountryCode, hashedPassword, profile_picture_url, generatedOtp]
         );
         const userId = userRes.rows[0].id;
-        const otpCode = userRes.rows[0].otp_code;
+        const otpCode = generatedOtp;
 
         await db.query(
             `INSERT INTO user_profiles (
