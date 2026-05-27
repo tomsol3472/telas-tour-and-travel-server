@@ -1,21 +1,35 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 const db = require('../config/db');
 
-// Configure Gmail Sender
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-        user: 'tomsol3472@gmail.com',
-        pass: 'gutavwetbwtlnkbl' 
-    },
-    connectionTimeout: 10000, // 10 seconds timeout
-    greetingTimeout: 10000,
-    socketTimeout: 10000
-});
+// Configure Resend API Email Sender
+const sendEmail = async (to, subject, text) => {
+    // Using the hardcoded fallback API key provided by the user for testing
+    const apiKey = process.env.RESEND_API_KEY || 're_J5ieDmtt_MHLqVyXzVQRkDB8gvYugVnft';
+    if (!apiKey) {
+        console.warn("⚠️ RESEND_API_KEY is not set in environment variables. Email will not be sent.");
+        return;
+    }
+    
+    try {
+        await axios.post('https://api.resend.com/emails', {
+            from: 'Telas Tour & Travel <onboarding@resend.dev>', // You must verify your domain in Resend to change this
+            to: to,
+            subject: subject,
+            text: text
+        }, {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log(`Email successfully sent to ${to}`);
+    } catch (err) {
+        console.error("Resend API Error:", err.response ? err.response.data : err.message);
+        throw err; // Re-throw so the caller knows it failed
+    }
+};
 
 // POST /api/auth/register
 exports.register = async (req, res) => {
@@ -116,12 +130,11 @@ exports.register = async (req, res) => {
         // SEND EMAIL
         if (otpCode) {
             try {
-                await transporter.sendMail({
-                    from: 'Telas Tour & Travel <tomsol3472@gmail.com>',
-                    to: email,
-                    subject: 'Your Telas Tour OTP Code',
-                    text: `Welcome to Telas Tour! Your 6-digit OTP code is: ${otpCode}. It expires in 45 seconds.`
-                });
+                await sendEmail(
+                    email,
+                    'Your Telas Tour OTP Code',
+                    `Welcome to Telas Tour! Your 6-digit OTP code is: ${otpCode}. It expires in 10 minutes.`
+                );
             } catch (mailError) {
                 console.error("Email failed to send:", mailError);
             }
@@ -183,12 +196,11 @@ exports.resendOtp = async (req, res) => {
         }
 
         // Send Email
-        await transporter.sendMail({
-            from: 'Telas Tour & Travel <tomsol3472@gmail.com>',
-            to: email,
-            subject: 'Your NEW Telas Tour OTP Code',
-            text: `Your new 6-digit OTP code is: ${new_otp}. It expires in 45 seconds.`
-        });
+        await sendEmail(
+            email,
+            'Your NEW Telas Tour OTP Code',
+            `Your new 6-digit OTP code is: ${new_otp}. It expires in 10 minutes.`
+        );
 
         res.status(200).json({ success: true, message: 'New OTP sent successfully.' });
     } catch (error) {
@@ -394,12 +406,11 @@ exports.forgotPassword = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User with this email not found.' });
         }
 
-        await transporter.sendMail({
-            from: 'Telas Tour & Travel <tomsol3472@gmail.com>',
-            to: email,
-            subject: 'Password Reset OTP',
-            text: `You requested a password reset. Your OTP code is: ${new_otp}. It expires in 10 minutes.`
-        });
+        await sendEmail(
+            email,
+            'Password Reset OTP',
+            `You requested a password reset. Your OTP code is: ${new_otp}. It expires in 10 minutes.`
+        );
 
         res.status(200).json({ success: true, message: 'Password reset OTP sent to email.' });
     } catch (error) {
