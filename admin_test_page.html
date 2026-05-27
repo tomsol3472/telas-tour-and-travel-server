@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin User Management Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .user-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-view {
+            background: #28a745;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .login-section {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .user-details {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .document-image {
+            max-width: 200px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin User Management Test Page</h1>
+    
+    <!-- Login Section -->
+    <div class="login-section">
+        <h3>Admin Authentication</h3>
+        <input type="email" id="adminEmail" placeholder="Admin Email" value="admin@example.com">
+        <input type="password" id="adminPassword" placeholder="Admin Password" value="admin123">
+        <button class="btn btn-edit" onclick="loginAdmin()">Login as Admin</button>
+        <button class="btn btn-view" onclick="checkAuthStatus()">Check Auth Status</button>
+        <div id="authStatus"></div>
+    </div>
+
+    <!-- Users Section -->
+    <div class="container">
+        <h3>User Management</h3>
+        <button class="btn btn-view" onclick="loadUsers()">Load All Users</button>
+        <div id="usersList"></div>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="statusMessages"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('statusMessages');
+            const statusElement = document.createElement('div');
+            statusElement.className = `status ${type}`;
+            statusElement.textContent = message;
+            statusDiv.appendChild(statusElement);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                statusElement.remove();
+            }, 5000);
+        }
+
+        // Check authentication status
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const authStatusDiv = document.getElementById('authStatus');
+            
+            if (!token) {
+                authStatusDiv.innerHTML = '<div class="status error">Not logged in</div>';
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const isExpired = Date.now() > payload.exp * 1000;
+                
+                authStatusDiv.innerHTML = `
+                    <div class="status ${isExpired ? 'error' : 'success'}">
+                        User: ${payload.email || 'Unknown'}<br>
+                        Role: ${payload.role || 'Unknown'}<br>
+                        Expires: ${new Date(payload.exp * 1000).toLocaleString()}<br>
+                        Status: ${isExpired ? 'EXPIRED' : 'VALID'}
+                    </div>
+                `;
+            } catch (e) {
+                authStatusDiv.innerHTML = '<div class="status error">Invalid token format</div>';
+            }
+        }
+
+        // Login as admin
+        async function loginAdmin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (!email || !password) {
+                showStatus('Please enter email and password', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    localStorage.setItem('token', result.token);
+                    showStatus('Login successful!');
+                    checkAuthStatus();
+                } else {
+                    showStatus(`Login failed: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load all users
+        async function loadUsers() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showStatus('Please login first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    displayUsers(result.data);
+                    showStatus(`Loaded ${result.data.length} users`);
+                } else {
+                    showStatus(`Failed to load users: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Display users
+        function displayUsers(users) {
+            const usersListDiv = document.getElementById('usersList');
+            
+            if (users.length === 0) {
+                usersListDiv.innerHTML = '<p>No users found</p>';
+                return;
+            }
+
+            usersListDiv.innerHTML = users.map(user => `
+                <div class="user-card">
+                    <strong>${user.first_name || 'No Name'} ${user.last_name || ''}</strong>
+                    <br>Email: ${user.email}
+                    <br>Role: ${user.role}
+                    <br>Status: ${user.status}
+                    <br>Phone: ${user.phone || 'Not provided'}
+                    <br>
+                    <button class="btn btn-view" onclick="viewUserProfile('${user.id}')">View Profile</button>
+                    <button class="btn btn-edit" onclick="editUser('${user.id}')">Edit</button>
+                    <button class="btn btn-delete" onclick="deleteUser('${user.id}')">Delete</button>
+                    <div id="userDetails_${user.id}" class="user-details"></div>
+                </div>
+            `).join('');
+        }
+
+        // View user profile
+        async function viewUserProfile(userId) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showStatus('Please login first', 'error');
+                return;
+            }
+
+            try {
+                // Load basic user info
+                const userResponse = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const userResult = await userResponse.json();
+
+                if (userResponse.ok && userResult.success) {
+                    const user = userResult.data;
+                    let profileHtml = `
+                        <h4>User Profile Details</h4>
+                        <p><strong>Full Name:</strong> ${user.first_name || 'N/A'} ${user.middle_name || ''} ${user.last_name || 'N/A'}</p>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Phone:</strong> ${user.phone || 'Not provided'}</p>
+                        <p><strong>Role:</strong> ${user.role}</p>
+                        <p><strong>Status:</strong> ${user.status}</p>
+                        <p><strong>Nationality:</strong> ${user.nationality || 'Not provided'}</p>
+                        <p><strong>City:</strong> ${user.city || 'Not provided'}</p>
+                        <p><strong>Country:</strong> ${user.country || 'Not provided'}</p>
+                        <p><strong>Created:</strong> ${new Date(user.created_at).toLocaleDateString()}</p>
+                    `;
+
+                    // Try to load staff documents if user is staff
+                    if (user.role === 'guide' || user.role === 'driver') {
+                        try {
+                            const docsResponse = await fetch(`${API_BASE_URL}/users/${userId}/documents`, {
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+
+                            const docsResult = await docsResponse.json();
+
+                            if (docsResponse.ok && docsResult.success) {
+                                const docs = docsResult.data;
+                                profileHtml += `
+                                    <h5>Staff Documents (${docs.type})</h5>
+                                    <p><strong>License Number:</strong> ${docs.documents?.license?.number || 'Not provided'}</p>
+                                    <p><strong>License Issue Date:</strong> ${docs.documents?.license?.issue_date || 'Not provided'}</p>
+                                    <p><strong>License Expiry:</strong> ${docs.documents?.license?.expiry_date || 'Not provided'}</p>
+                                    <p><strong>License Expired:</strong> ${docs.documents?.license?.is_expired ? 'Yes' : 'No'}</p>
+                                    <p><strong>Rating:</strong> ${docs.rating || 'Not rated'}</p>
+                                    <p><strong>Experience:</strong> ${docs.years_experience || 0} years</p>
+                                `;
+
+                                if (docs.documents?.license?.photo_url) {
+                                    profileHtml += `
+                                        <p><strong>License Photo:</strong></p>
+                                        <img src="http://localhost:5000${docs.documents.license.photo_url}" 
+                                             alt="License Photo" class="document-image"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                        <p style="display:none; color:red;">Image not accessible</p>
+                                    `;
+                                }
+
+                                if (docs.type === 'guide' && docs.documents?.first_aid) {
+                                    profileHtml += `
+                                        <p><strong>First Aid Certified:</strong> ${docs.documents.first_aid.has_cert ? 'Yes' : 'No'}</p>
+                                        <p><strong>First Aid Expiry:</strong> ${docs.documents.first_aid.expiry_date || 'Not provided'}</p>
+                                    `;
+                                }
+                            } else {
+                                profileHtml += `<p><em>Staff documents not available: ${docsResult.error}</em></p>`;
+                            }
+                        } catch (docsError) {
+                            profileHtml += `<p><em>Error loading staff documents: ${docsError.message}</em></p>`;
+                        }
+                    }
+
+                    const detailsDiv = document.getElementById(`userDetails_${userId}`);
+                    detailsDiv.innerHTML = profileHtml;
+                    detailsDiv.style.display = detailsDiv.style.display === 'block' ? 'none' : 'block';
+
+                    showStatus('User profile loaded');
+                } else {
+                    showStatus(`Failed to load user profile: ${userResult.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Edit user
+        async function editUser(userId) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showStatus('Please login first', 'error');
+                return;
+            }
+
+            const firstName = prompt('Enter new first name:');
+            const lastName = prompt('Enter new last name:');
+            const status = prompt('Enter status (active/inactive):', 'active');
+
+            if (!firstName && !lastName && !status) {
+                showStatus('No changes made', 'error');
+                return;
+            }
+
+            const updateData = {};
+            if (firstName) updateData.first_name = firstName;
+            if (lastName) updateData.last_name = lastName;
+            if (status) updateData.status = status;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showStatus('User updated successfully!');
+                    loadUsers(); // Refresh the list
+                } else {
+                    showStatus(`Update failed: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Delete user
+        async function deleteUser(userId) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showStatus('Please login first', 'error');
+                alert('Please login as admin first');
+                return;
+            }
+
+            // Double confirmation for safety
+            const confirmMsg = 'Are you sure you want to delete this user?\n\nThis action cannot be undone!\n\nClick OK to proceed with deletion.';
+            if (!confirm(confirmMsg)) {
+                showStatus('Delete cancelled', 'error');
+                return;
+            }
+
+            try {
+                console.log('Attempting to delete user:', userId);
+                console.log('Using token:', token.substring(0, 20) + '...');
+                
+                const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('Delete response status:', response.status);
+                
+                const result = await response.json();
+                console.log('Delete response data:', result);
+
+                if (response.ok && result.success) {
+                    showStatus('✅ User deleted successfully!');
+                    alert('User deleted successfully!');
+                    loadUsers(); // Refresh the list
+                } else {
+                    const errorMsg = `Delete failed: ${result.error || 'Unknown error'}`;
+                    showStatus(errorMsg, 'error');
+                    alert(errorMsg);
+                    
+                    // Provide specific guidance based on error
+                    if (response.status === 401) {
+                        alert('Authentication failed. Please login again.');
+                    } else if (response.status === 403) {
+                        alert('You do not have permission to delete users. Ensure you are logged in as admin.');
+                    } else if (response.status === 404) {
+                        alert('User not found. They may have already been deleted.');
+                    }
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                const errorMsg = `Network error: ${error.message}`;
+                showStatus(errorMsg, 'error');
+                alert(errorMsg + '\n\nPlease check:\n1. Server is running\n2. Network connection\n3. CORS configuration');
+            }
+        }
+
+        // Check auth status on page load
+        window.onload = function() {
+            checkAuthStatus();
+        };
+    </script>
+</body>
+</html>

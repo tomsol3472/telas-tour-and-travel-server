@@ -1,0 +1,664 @@
+{
+  "info": {
+    "name": "Telas Business Rules API",
+    "description": "Comprehensive API collection for Telas Tourism Platform Business Rules",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/business-rules",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "your_jwt_token_here",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Verification",
+      "item": [
+        {
+          "name": "Get Verification Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/verification/status/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["verification", "status", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Verification Tier",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newTier\": \"verified\",\n  \"reason\": \"All documents verified\",\n  \"documentationScore\": 95.5,\n  \"yearsExperience\": 5,\n  \"averageRating\": 4.7\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/verification/tier/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["verification", "tier", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking & Pricing",
+      "item": [
+        {
+          "name": "Lock Booking Price",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"uuid-here\",\n  \"priceBreakdown\": {\n    \"base_price\": 5000,\n    \"taxes\": 500,\n    \"service_fee\": 250,\n    \"final_amount\": 5750\n  },\n  \"currency\": \"ETB\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/price-lock",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "price-lock"]
+            }
+          }
+        },
+        {
+          "name": "Get Cancellation Policy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/cancellation-policy/:bookingId",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "cancellation-policy", ":bookingId"],
+              "variable": [
+                {
+                  "key": "bookingId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"uuid-here\",\n  \"cancellationReason\": \"Change of plans\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment Installments",
+      "item": [
+        {
+          "name": "Create Installments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"uuid-here\",\n  \"totalAmount\": 15000,\n  \"currency\": \"ETB\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/installments",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "installments"]
+            }
+          }
+        },
+        {
+          "name": "Get Installments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/installments/:bookingId",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "installments", ":bookingId"],
+              "variable": [
+                {
+                  "key": "bookingId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Service Provider Management",
+      "item": [
+        {
+          "name": "Update Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availabilityDate\": \"2026-06-15\",\n  \"isAvailable\": false,\n  \"reason\": \"Personal emergency\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/providers/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers", "availability"]
+            }
+          }
+        },
+        {
+          "name": "Get Response Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/providers/response-metrics/:providerId",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers", "response-metrics", ":providerId"],
+              "variable": [
+                {
+                  "key": "providerId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Reliability Score",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/providers/reliability-score/:providerId",
+              "host": ["{{baseUrl}}"],
+              "path": ["providers", "reliability-score", ":providerId"],
+              "variable": [
+                {
+                  "key": "providerId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Financial Management",
+      "item": [
+        {
+          "name": "Calculate Booking Profit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/profit-calculation/:bookingId",
+              "host": ["{{baseUrl}}"],
+              "path": ["finance", "profit-calculation", ":bookingId"],
+              "variable": [
+                {
+                  "key": "bookingId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Calculate Package Margin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/package-margin/:packageId?numberOfPersons=4&startDate=2026-07-01",
+              "host": ["{{baseUrl}}"],
+              "path": ["finance", "package-margin", ":packageId"],
+              "query": [
+                {
+                  "key": "numberOfPersons",
+                  "value": "4"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-07-01"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "packageId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Adjust Dynamic Pricing",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"costChanges\": [\n    { \"type\": \"fuel\", \"amount\": 500 },\n    { \"type\": \"hotel\", \"amount\": 1000 }\n  ],\n  \"adjustmentReason\": \"Seasonal cost increase\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/finance/dynamic-pricing/:packageId",
+              "host": ["{{baseUrl}}"],
+              "path": ["finance", "dynamic-pricing", ":packageId"],
+              "variable": [
+                {
+                  "key": "packageId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Convert Currency",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100,\n  \"fromCurrency\": \"USD\",\n  \"toCurrency\": \"ETB\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/finance/currency-conversion",
+              "host": ["{{baseUrl}}"],
+              "path": ["finance", "currency-conversion"]
+            }
+          }
+        },
+        {
+          "name": "Daily Reconciliation",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/reconciliation/daily?date=2026-05-19",
+              "host": ["{{baseUrl}}"],
+              "path": ["finance", "reconciliation", "daily"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-05-19"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Financial Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/dashboard?startDate=2026-05-01&endDate=2026-05-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["finance", "dashboard"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2026-05-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-05-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Monthly P&L Statement",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/finance/reports/monthly?year=2026&month=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["finance", "reports", "monthly"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                },
+                {
+                  "key": "month",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Emergency & Safety",
+      "item": [
+        {
+          "name": "Trigger SOS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"uuid-here\",\n  \"location\": {\n    \"latitude\": 9.0320,\n    \"longitude\": 38.7469\n  },\n  \"emergencyType\": \"medical\",\n  \"description\": \"Tourist injured during hiking\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/emergency/sos",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency", "sos"]
+            }
+          }
+        },
+        {
+          "name": "Resolve Emergency",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolutionNotes\": \"Tourist transported to hospital, condition stable\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/emergency/resolve/:sosId",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency", "resolve", ":sosId"],
+              "variable": [
+                {
+                  "key": "sosId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Active Emergencies",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/emergency/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["emergency", "active"]
+            }
+          }
+        },
+        {
+          "name": "Check Guide-Tourist Ratio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/safety/guide-ratio/:guideId?numberOfTourists=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["safety", "guide-ratio", ":guideId"],
+              "query": [
+                {
+                  "key": "numberOfTourists",
+                  "value": "20"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "guideId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Vehicle Compliance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/safety/vehicle-compliance/:vehicleId",
+              "host": ["{{baseUrl}}"],
+              "path": ["safety", "vehicle-compliance", ":vehicleId"],
+              "variable": [
+                {
+                  "key": "vehicleId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quality Assurance",
+      "item": [
+        {
+          "name": "Check Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/quality/performance-check/:providerId",
+              "host": ["{{baseUrl}}"],
+              "path": ["quality", "performance-check", ":providerId"],
+              "variable": [
+                {
+                  "key": "providerId",
+                  "value": "uuid-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify Review Eligibility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revieweeId\": \"uuid-here\",\n  \"bookingId\": \"uuid-here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/quality/review-eligibility",
+              "host": ["{{baseUrl}}"],
+              "path": ["quality", "review-eligibility"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
