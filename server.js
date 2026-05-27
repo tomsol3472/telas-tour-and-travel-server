@@ -63,7 +63,7 @@ app.use((req, res, next) => {
     
     if (db && typeof db.query === 'function') {
       db.query(query, [level, logMessage]).catch(err => {
-        console.error('Failed to write log to DB:', err.message);
+        console.error('Failed to write log to DB:', err);
       });
     }
   });
@@ -119,7 +119,9 @@ app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 app.use((err, req, res, next) => {
   console.error(err.stack);
   if (db && typeof db.query === 'function') {
-    db.query(`INSERT INTO system_app_logs (level, category, message) VALUES ('ERROR', 'SERVER_ERROR', $1)`, [err.message]).catch(() => {});
+    db.query(`INSERT INTO system_app_logs (level, category, message) VALUES ('ERROR', 'SERVER_ERROR', $1)`, [err.message]).catch(e => {
+        console.error('Failed to write SERVER_ERROR log to DB:', e);
+    });
   }
   res.status(500).json({ success: false, error: err.message || 'Server Error' });
 });
